@@ -1,4 +1,4 @@
-# Github Actions Padavan RM2100
+# Github Actions Padavan YK-L1
 
 - Padavan源码是[fightroad/Padavan-KVR](https://github.com/fightroad/Padavan-KVR)。
 - Github Actions参考自[Ljzkirito/Actions-Padavan_Redmi-AC2100](https://github.com/Ljzkirito/Actions-Padavan_Redmi-AC2100)。
