@@ -5,11 +5,11 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/MeIsReallyBa/padavan-4.4
+  REPO_URL: https://github.com/fightroad/Padavan-KVR
   REPO_BRANCH: main
   UPLOAD_RELEASE: true
-  TNAME: RM2100
-  CONFIG_FILE: RM2100.config
+  TNAME: YK-L1
+  CONFIG_FILE: YK-L1.config
   XRAYCONFIG_FILE: genxrayconfig.lua
   SHADOWSOCKSFILE: Shadowsocks.asp
   XRAY_FILE: xray
@@ -34,6 +34,10 @@ jobs:
        sudo -E apt-get -qq autoremove --purge
        sudo -E apt-get -qq clean
        sudo timedatectl set-timezone "Asia/Shanghai"
+       sudo apt-get update
+       sudo apt-get -y install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd fakeroot \
+        cpio git python-docutils gettext automake autopoint texinfo build-essential help2man \
+        pkg-config zlib1g-dev libgmp3-dev libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget
 
     - name: Clone source
       if: (!cancelled())
@@ -77,7 +81,7 @@ jobs:
       run: |
        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
        touch release.txt
-       echo "## MeIsReallyBa Padavan-4.4 Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
+       echo "## fightroad Padavan YK-L1 Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
        echo "- Source code:" >> release.txt
        echo "  ${{ env.REPO_URL }}/tree/${{ env.REPO_BRANCH }}" >> release.txt
        echo "- ${{ env.TNAME }}.trx" >> release.txt
