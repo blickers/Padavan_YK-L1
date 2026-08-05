@@ -18,6 +18,6 @@
 ```
 
 # 截图
-- ![](https://raw.githubusercontent.com/FishInShallow/Padavan_RM2100/MelsReallyBa/screenshot1.png)
-- ![](https://raw.githubusercontent.com/FishInShallow/Padavan_RM2100/MelsReallyBa/screenshot2.png)
+- ![](https://raw.githubusercontent.com/blickers/Padavan_YK-L1/main/screenshot1.png)
+- ![](https://raw.githubusercontent.com/blickers/Padavan_YK-L1/main/screenshot2.png)
 
