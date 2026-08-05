@@ -95,15 +95,19 @@
 			const tlsVal = document.getElementById('v2_tls').value;
 			if(tlsVal == '0'){
 			showhide_div('row_ssp_insecure', 0);
-                        showhide_div('row_v2_tls_fp', 0);
+      showhide_div('row_v2_tls_fp', 0);
 			showhide_div('row_v2_public_key', 0);
 			showhide_div('row_v2_short_id', 0);
 			showhide_div('row_v2_spiderx', 0);
 			showhide_div('row_tj_tls_host', 0);
+			showhide_div('row_v2_alpn', 0);
+			showhide_div('row_v2_ech_config', 0);
 			}else if (tlsVal == '1') {
 			showhide_div('row_ssp_insecure', 1);
 			showhide_div('row_tj_tls_host', 1);
 			showhide_div('row_v2_tls_fp', 1);
+			showhide_div('row_v2_alpn', 1);
+			showhide_div('row_v2_ech_config', 1);
 			showhide_div('row_v2_short_id', 0);
 			showhide_div('row_v2_spiderx', 0);
 			showhide_div('row_v2_public_key', 0);
@@ -111,6 +115,8 @@
 			else{		
 			showhide_div('row_tj_tls_host', 1);
 			showhide_div('row_v2_tls_fp', 1);
+			showhide_div('row_v2_alpn', 1);
+			showhide_div('row_v2_ech_config', 1);
 			showhide_div('row_v2_public_key', 1);
 			showhide_div('row_v2_short_id', 1);
 			showhide_div('row_v2_spiderx', 1);
@@ -328,6 +334,7 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 				showhide_div('row_v2_xhttp_mode', 1);
 				showhide_div('row_v2_http_host', 1);
 				showhide_div('row_v2_http_path', 1);
+				showhide_div('row_v2_xhttp_extra', 1);
 			} else if (b == "h2") {
 				showhide_div('row_v2_http2_host', 1);
 				showhide_div('row_v2_http2_path', 1);
@@ -374,6 +381,19 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 			document.form.current_page.value = "Shadowsocks.asp";
 			document.form.next_page.value = "";
 			document.form.submit();
+		}
+		function use_node(node_id, node_alias) {
+			var title = node_alias ? node_alias : ("节点 " + node_id);
+			if (confirm("确认将 [" + title + "] 设置为主服务器并应用吗？")) {
+				// 1. 将主服务器下拉框/表单值设为当前节点的 id
+				document.form.global_server.value = node_id;
+				var $nodeList = $j("#nodeList");
+				if ($nodeList.length) {
+					$nodeList.val(node_id);
+				}
+				// 2. 调用已有的应用设置与重启服务流程
+				applyRule();
+			}
 		}
 		function submitInternet(v) {
 			showLoading();
@@ -502,7 +522,7 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 						sortName: 'ids',
 						sortOrder: "desc",
 						sidePagination: 'client',
-						pageSize: 15,
+						pageSize: 50,
 						pageList: [15, 25, 35, 50], // 分页显示记录数
 						uniqueId: "ids",
 						ajax:function(request) {
@@ -637,7 +657,7 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 						}, {
 							field: 'operate',
 							title: '操作',
-							width: '200px',
+							width: '280px',
 							align: 'center',
 							valign: 'middle',
 							events: window.operateEvents,
@@ -688,12 +708,16 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 		}
 		function actionFormatter(value, row, index) {
 			return [
+				'<a class="use_ss" href="javascript:void(0)" title="使用">使用</a>',
 				'<a class="edit_ss" href="javascript:void(0)" title="编辑">编辑</a>',
 				'<a class="copy_ss" href="javascript:void(0)" title="复制">复制</a>',
 				'<a class="del_ss" href="javascript:void(0)" title="删除">删除</a>'
 			].join(' | ');
 		}
 		window.operateEvents = {
+			'click .use_ss': function (e, value, row, index) {
+				use_node(row.ids, row.alias);
+			},
 			'click .edit_ss': function (e, value, row, index) {
 				editing_ss_id = row.ids;
 				document.getElementById("ss_setting_title").innerHTML = "编辑节点";
@@ -771,6 +795,12 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 			//sock5
 			document.getElementById("s5_password").value = '';
 			document.getElementById("s5_username").value = '';
+			//v2 xhttp
+			document.getElementById("v2_xhttp_mode").value = '';
+			document.getElementById("v2_xhttp_extra").value = '';
+			//v2
+			document.getElementById("v2_alpn").value = '';
+			document.getElementById("v2_ech_config").value = '';
 			switch_ss_type();
 		}
 		//编辑节点
@@ -804,13 +834,27 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 				document.getElementById("v2_vmess_id").value = getProperty(ss, 'vmess_id', '');
 				document.getElementById("v2_alter_id").value = getProperty(ss, 'alter_id', '');
 				document.getElementById("v2_transport").value = transport;
-				document.getElementById("v2_xhttp_mode").value = getProperty(ss, 'mode', '');
 				document.getElementById("v2_tcp_guise").value = getProperty(ss, 'tcp_guise', 'none');
 				document.getElementById("v2_http_host").value = getProperty(ss, 'http_host', '');
 				document.getElementById("v2_http_path").value = getProperty(ss, 'http_path', '');
 				document.getElementById("v2_tls").value = getProperty(ss, 'tls', '0');
 				document.getElementById("v2_flow").value = getProperty(ss, 'flow_id', '0');
-                document.getElementById("v2_tls_fp").value = getProperty(ss, 'tls_fp_id', '0');
+        var fpVal = getProperty(ss, 'tls_fp', getProperty(ss, 'tls_fp_id', ''));
+				var objFp = document.getElementById("v2_tls_fp");
+				if (objFp) {
+					objFp.value = fpVal;
+					// 如果直接赋值 value 没能匹配上（比如 option 的 value 和 text 不一致），则遍历下拉框进行智能匹配
+					if (fpVal !== '' && (objFp.selectedIndex === -1 || objFp.value !== fpVal)) {
+						for (var i = 0; i < objFp.options.length; i++) {
+							if (objFp.options[i].value === fpVal || objFp.options[i].text === fpVal) {
+								objFp.selectedIndex = i;
+								break;
+							}
+						}
+					}
+				}
+        document.getElementById("v2_alpn").value = getProperty(ss, 'alpn', '');
+        document.getElementById("v2_ech_config").value = getProperty(ss, 'ech_config', '');
 				document.getElementById("v2_public_key").value = getProperty(ss, 'public_key', '');
 				document.getElementById("v2_short_id").value = getProperty(ss, 'short_id', '');
 				document.getElementById("v2_spiderx").value = getProperty(ss, 'spiderx', '');
@@ -834,6 +878,11 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 					document.getElementById("v2_quic_guise").value = getProperty(ss, 'quic_guise', 'none');
 					document.getElementById("v2_quic_key").value = getProperty(ss, 'quic_key', '');
 					document.getElementById("v2_quic_security").value = getProperty(ss, 'quic_security', 'none');
+				} else if (transport == "xhttp") {
+					document.getElementById("v2_xhttp_mode").value = getProperty(ss, 'mode', '');
+					document.getElementById("v2_http_host").value = getProperty(ss, 'http_host', '');
+					document.getElementById("v2_http_path").value = getProperty(ss, 'http_path', '');
+					document.getElementById("v2_xhttp_extra").value = getProperty(ss, 'extra', '');
 				}
 			} else if (type == "trojan") {
 				document.getElementById("ssp_insecure").value = getProperty(ss, 'insecure', 0);
@@ -1395,7 +1444,6 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 				var http_pathnew = document.getElementById("v2_http_path").value;
 				if (http_pathnew == '') { document.getElementById("v2_http_path").value='/';}
 				var objFlow = document.getElementById("v2_flow");
-				var objFp = document.getElementById("v2_tls_fp");
 				var DataObj = {
 					type: document.getElementById("ssp_type").value,
 					alias: document.getElementById("ssp_name").value,
@@ -1407,11 +1455,23 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 					transport: document.getElementById("v2_transport").value,
 					tls: document.getElementById("v2_tls").value,
 					flow: objFlow.options.selectedIndex == 0 ? "" : objFlow.options[objFlow.options.selectedIndex].text,
-					tls_fp: objFp.options.selectedIndex == 0 ? "" : objFp.options[objFp.options.selectedIndex].text,
+					alpn: document.getElementById("v2_alpn").value,
+					ech_config: document.getElementById("v2_ech_config").value,
 					flow_id: objFlow.value,
-					tls_fp_id: objFp.value,
 					tls_host: document.getElementById("ssp_tls_host").value,
 					coustom: "1"
+				}
+				var objFp = document.getElementById("v2_tls_fp");
+				if (objFp) {
+					var fpText = "";
+					if (objFp.selectedIndex >= 0) {
+						fpText = objFp.options[objFp.selectedIndex].text;
+					}
+					if (fpText === "未配置") {
+						fpText = "";
+					}
+					DataObj.tls_fp = fpText;
+					DataObj.tls_fp_id = objFp.value;
 				}
 				if (document.getElementById("v2_tls").value == "1") {
 					DataObj.insecure = document.getElementById("ssp_insecure").value;
@@ -1442,7 +1502,8 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 					DataObj.mode = document.getElementById("v2_xhttp_mode").value;
 					DataObj.http_host = document.getElementById("v2_http_host").value;
 					DataObj.http_path = document.getElementById("v2_http_path").value;
-				} else if (document.getElementById("v2_transport").value == "h2" && document.getElementById("v2_tls").value == "1") {
+					DataObj.extra = document.getElementById("v2_xhttp_extra").value;
+				} else if (document.getElementById("v2_transport").value == "h2") {
 					DataObj.h2_host = document.getElementById("v2_h2_host").value;
 					DataObj.h2_path = document.getElementById("v2_h2_path").value;
 				} else if (document.getElementById("v2_transport").value == "quic") {
@@ -2434,7 +2495,27 @@ setTimeout('document.getElementById("btn_ctime").style.display="none";',1000);
 																	<option value="1">tls</option>
 																	<option value="2">reality</option>
 																</select>
-																
+															</td>
+														</tr>
+														<!-- 补充：xhttp 扩展参数 (JSON) -->
+														<tr id="row_v2_xhttp_extra" style="display:none;">
+															<th width="50%">xhttp extra (JSON)</th>
+															<td>
+																<input type="text" class="input" size="15" name="v2_xhttp_extra" id="v2_xhttp_extra" value="" />
+															</td>
+														</tr>
+														<!-- 补充：ALPN 配置 -->
+														<tr id="row_v2_alpn" style="display:none;">
+															<th width="50%">ALPN</th>
+															<td>
+																<input type="text" class="input" size="15" name="v2_alpn" id="v2_alpn" placeholder="h2,http/1.1" value="" />
+															</td>
+														</tr>
+														<!-- 补充：ECH Config List -->
+														<tr id="row_v2_ech_config" style="display:none;">
+															<th width="50%">ECH Config List</th>
+															<td>
+																<input type="text" class="input" size="15" name="v2_ech_config" id="v2_ech_config" value="" />
 															</td>
 														</tr>
 														<tr id="row_ssp_insecure" style="display:none;">
